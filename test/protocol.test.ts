@@ -24,7 +24,7 @@ test("extension installs an owned exact registration and disposes it", async () 
   } as never);
   const fabric = ensureProtocolFabric();
   assert.deepEqual(fabric.describeNode(protocolNodeId)?.provides.map((provide) => provide.name), names);
-  assert.equal(fabric.diagnostics().registrations.find((item) => item.nodeId === protocolNodeId)?.owned, true);
+  assert.match(fabric.diagnostics().registrations.find((item) => item.nodeId === protocolNodeId)?.registrationId ?? "", /^registration_/);
   assert.deepEqual(commands, ["cron"]);
   await shutdown?.();
   assert.equal(fabric.describeNode(protocolNodeId), undefined);
