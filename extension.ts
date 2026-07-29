@@ -1,21 +1,23 @@
+import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { ensureProtocolFabric, registerProtocolManifest, type ProtocolHandler } from "@kybernetria/pi-protocol";
+import { ensureProtocolFabric, type ProtocolHandler } from "@kybernetria/pi-protocol/core";
 import { CronClient } from "./src/client.ts";
-import { manifest, protocolNamespace as protocol } from "./src/protocol-manifest.ts";
+import { definition } from "./src/protocol-manifest.ts";
 import type { CronJob, JobReplacement, Occurrence } from "./src/types.ts";
 
 export default function piCronExtension(pi: ExtensionAPI): void {
   const client = new CronClient();
   const fabric = ensureProtocolFabric();
-  fabric.unregister(protocol.nodeId);
-  const handlers = Object.fromEntries(manifest.provides.map((provide) => {
-    if (provide.execution.type !== "handler") throw new Error(`Cron provide ${provide.name} must be handler-backed`);
-    protocol.handler(provide.execution.handler);
-    return [provide.execution.handler,
-      (async (input: unknown) => client.request(provide.name as Parameters<CronClient["request"]>[0], input)) as ProtocolHandler,
-    ];
-  }));
-  registerProtocolManifest(fabric, { manifest, handlers });
+  const handlers = Object.fromEntries(definition.manifest.provides.map((provide) => [
+    provide.name,
+    (async (input: unknown) => client.request(provide.name as Parameters<CronClient["request"]>[0], input)) as ProtocolHandler,
+  ]));
+  const registration = fabric.install(definition, { handlers }, {
+    packageId: "pi-cron",
+    packageVersion: "0.1.0",
+    sourcePath: fileURLToPath(new URL(".", import.meta.url)),
+  });
+  pi.on("session_shutdown", async () => { await registration.dispose(); });
 
   pi.registerCommand("cron", {
     description: "Cron manager. Run /cron with no arguments for the guided UI.",

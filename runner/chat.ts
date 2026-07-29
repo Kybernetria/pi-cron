@@ -3,8 +3,6 @@ import {
   SessionManager,
   SettingsManager,
 } from "@earendil-works/pi-coding-agent";
-import { ensureProtocolFabric } from "@kybernetria/pi-protocol";
-import { protocolNamespace } from "../src/protocol-manifest.ts";
 import type { CronJob, ExecutionResult } from "../src/types.ts";
 import { bound } from "./protocol.ts";
 
@@ -17,7 +15,6 @@ export async function executeChat(job: CronJob): Promise<ExecutionResult> {
     sessionManager: SessionManager.inMemory(job.action.cwd),
     settingsManager: settings,
   });
-  ensureProtocolFabric().unregister(protocolNamespace.nodeId);
   try {
     await session.prompt(job.action.prompt, { source: "extension" });
     const text = lastAssistantText(session.messages);

@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-import { Ajv } from "ajv";
 import {
   createAgentSession,
   SessionManager,
@@ -8,16 +6,16 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import {
   ensureProtocolFabric,
-  type InvocationProvenanceEvent,
   type ProtocolFabric,
-} from "@kybernetria/pi-protocol";
-import { protocolNamespace } from "../src/protocol-manifest.ts";
+  type ProtocolPrincipal,
+} from "@kybernetria/pi-protocol/core";
 import type { CronJob, ExecutionResult, ProtocolAction } from "../src/types.ts";
 import { OUTPUT_LIMIT } from "./types.ts";
 
 export interface ProtocolRuntime {
   session: AgentSession;
   fabric: ProtocolFabric;
+  principal: ProtocolPrincipal;
 }
 
 export async function bootstrapProtocol(): Promise<ProtocolRuntime> {
@@ -26,42 +24,42 @@ export async function bootstrapProtocol(): Promise<ProtocolRuntime> {
   settings.applyOverrides({ retry: { enabled: false } });
   const { session } = await createAgentSession({ cwd, sessionManager: SessionManager.inMemory(cwd), settingsManager: settings });
   const fabric = ensureProtocolFabric();
-  fabric.unregister(protocolNamespace.nodeId);
-  return { session, fabric };
+  return {
+    session,
+    fabric,
+    principal: fabric.mintPrincipal("pi_cron.runner", "system"),
+  };
 }
 
+/**
+ * Validation is intentionally discovery-only here. The canonical fabric is the
+ * sole schema validator and performs bounded input admission immediately before
+ * scheduled execution.
+ */
 export function validateProtocol(runtime: ProtocolRuntime, action: ProtocolAction): void {
   const [nodeId, provide] = splitTarget(action.target);
-  const spec = runtime.fabric.describeProvide(nodeId, provide);
-  if (!spec) throw new Error(`protocol target does not exist: ${action.target}`);
-  const ajv = new Ajv({ allErrors: true, strict: false });
-  const valid = ajv.compile(spec.inputSchema as object);
-  if (!valid(action.input)) {
-    throw new Error(`protocol input does not match ${action.target}: ${ajv.errorsText(valid.errors, { separator: "; " })}`);
+  if (!runtime.fabric.describeProvide(nodeId, provide)) {
+    throw new Error(`protocol target does not exist: ${action.target}`);
   }
 }
 
 export async function executeProtocol(runtime: ProtocolRuntime, job: CronJob): Promise<ExecutionResult> {
   if (job.action.type !== "protocol") throw new Error("expected protocol action");
-  const [nodeId, provide] = splitTarget(job.action.target);
-  const traceId = `cron-${job.id}-${randomUUID()}`;
-  const events: InvocationProvenanceEvent[] = [];
-  const unsubscribe = runtime.fabric.subscribeProvenanceRecorder((event) => {
-    if (event.traceId === traceId) events.push(event);
+  const target = job.action.target;
+  const result = await runtime.fabric.invokeAs(runtime.principal, target, job.action.input, {
+    grant: { targets: [target], maxDepth: 8, maxInvocations: 64 },
   });
-  try {
-    const result = await runtime.fabric.invoke({
-      nodeId, provide, input: job.action.input, traceId,
-      spanId: `cron-${randomUUID()}`,
-      callerNodeId: protocolNamespace.nodeId,
-      session: { id: `cron-${randomUUID()}`, mode: "ephemeral" },
-    });
-    const trace = events.map(({ traceId, spanId, parentSpanId, status }) => ({ traceId, spanId, parentSpanId, status }));
-    if (!result.ok) return { status: "completed", error: bound(`${result.error.code}: ${result.error.message}\ntrace=${JSON.stringify(trace)}`) };
-    return { status: "completed", result: bound(`${serialize(result.output)}\ntrace=${JSON.stringify(trace)}`) };
-  } finally {
-    unsubscribe();
+  const receipt = {
+    invocationId: result.receipt.invocationId,
+    traceId: result.receipt.traceId,
+    spanId: result.receipt.spanId,
+    state: result.receipt.state,
+    target: result.receipt.target,
+  };
+  if (!result.ok) {
+    return { status: "completed", error: bound(`${result.error.code}: ${result.error.message}\nreceipt=${JSON.stringify(receipt)}`) };
   }
+  return { status: "completed", result: bound(`${serialize(result.output)}\nreceipt=${JSON.stringify(receipt)}`) };
 }
 
 export function splitTarget(target: string): [string, string] {

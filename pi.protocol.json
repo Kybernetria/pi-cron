@@ -1,52 +1,349 @@
 {
-  "protocolVersion": "0.2.0",
-  "nodeId": "pi_cron",
-  "packageId": "pi-cron",
-  "version": "0.1.0",
-  "purpose": "Persist and serially execute validated Pi chat jobs in their explicit cwd and protocol jobs from the daemon user's HOME.",
-  "tags": ["cron", "scheduler", "pi"],
+  "$schema": "https://pi.dev/protocol/manifest-v1.schema.json",
+  "schemaVersion": 1,
+  "node": {
+    "id": "pi_cron",
+    "purpose": "Persist and serially execute validated Pi chat jobs in their explicit cwd and protocol jobs from the daemon user's HOME.",
+    "tags": [
+      "cron",
+      "scheduler",
+      "pi"
+    ]
+  },
   "provides": [
     {
-      "name": "add", "description": "Validate and persist a complete job. Chat actions require cwd; protocol actions run from HOME. The daemon generates id when omitted.",
-      "inputSchema": {"type":"object","required":["job"],"properties":{"job":{"type":"object","required":["name","enabled","schedule","timezone","action"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"enabled":{"type":"boolean"},"schedule":{"type":"string"},"timezone":{"type":"string"},"action":{"type":"object"}}}}},
-      "outputSchema": {"type":"object"}, "execution":{"type":"handler","handler":"add"}, "effects":["file_write"]
+      "name": "add",
+      "description": "Validate and persist a complete job. Chat actions require cwd; protocol actions run from HOME. The daemon generates id when omitted.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "properties": {
+          "job": {
+            "type": "object",
+            "required": [
+              "name",
+              "enabled",
+              "schedule",
+              "timezone",
+              "action"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "schedule": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "timezone": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "action": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "effects": [
+        "fs.write"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "unsafe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     },
     {
-      "name": "edit", "description": "Atomically replace every mutable field after full validation; chat cwd is explicit and protocol cwd remains HOME.",
-      "inputSchema": {"type":"object","required":["job"],"properties":{"job":{"type":"object","required":["id","name","enabled","schedule","timezone","action"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"enabled":{"type":"boolean"},"schedule":{"type":"string"},"timezone":{"type":"string"},"action":{"type":"object"}}}}},
-      "outputSchema": {"type":"object"}, "execution":{"type":"handler","handler":"edit"}, "effects":["file_write"]
+      "name": "edit",
+      "description": "Atomically replace every mutable field after full validation; chat cwd is explicit and protocol cwd remains HOME.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "properties": {
+          "job": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "enabled",
+              "schedule",
+              "timezone",
+              "action"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "schedule": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "timezone": {
+                "type": "string",
+                "maxLength": 262144
+              },
+              "action": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "effects": [
+        "fs.write"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "unsafe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     },
     {
-      "name":"delete", "description":"Delete one job by id.",
-      "inputSchema":{"type":"object","required":["id"],"properties":{"id":{"type":"string"}}},
-      "outputSchema":{"type":"object","required":["deleted","id"],"properties":{"deleted":{"type":"boolean"},"id":{"type":"string"}}},
-      "execution":{"type":"handler","handler":"delete"}, "effects":["file_write"]
+      "name": "delete",
+      "description": "Delete one job by id.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 262144
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "deleted",
+          "id"
+        ],
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "maxLength": 262144
+          }
+        },
+        "additionalProperties": false
+      },
+      "effects": [
+        "fs.write"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "unsafe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     },
     {
-      "name":"list", "description":"List all persisted cron jobs.",
-      "inputSchema":{"type":"object"}, "outputSchema":{"type":"array","items":{"type":"object"}},
-      "execution":{"type":"handler","handler":"list"}
+      "name": "list",
+      "description": "List all persisted cron jobs.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "maxItems": 1000
+      },
+      "effects": [
+        "fs.read"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "safe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     },
     {
-      "name":"get", "description":"Get one job and its bounded occurrence history.",
-      "inputSchema":{"type":"object","required":["id"],"properties":{"id":{"type":"string"}}},
-      "outputSchema":{"type":"object","required":["job","occurrences"],"properties":{"job":{"type":"object"},"occurrences":{"type":"array","items":{"type":"object"}}}},
-      "execution":{"type":"handler","handler":"get"}
+      "name": "get",
+      "description": "Get one job and its bounded occurrence history.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 262144
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "job",
+          "occurrences"
+        ],
+        "properties": {
+          "job": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "effects": [
+        "fs.read"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "safe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     },
     {
-      "name":"enable", "description":"Enable a job and calculate its next future occurrence.",
-      "inputSchema":{"type":"object","required":["id"],"properties":{"id":{"type":"string"}}}, "outputSchema":{"type":"object"},
-      "execution":{"type":"handler","handler":"enable"}, "effects":["file_write"]
+      "name": "enable",
+      "description": "Enable a job and calculate its next future occurrence.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 262144
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "effects": [
+        "fs.write"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "unsafe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     },
     {
-      "name":"disable", "description":"Disable a job and clear its scheduled occurrence.",
-      "inputSchema":{"type":"object","required":["id"],"properties":{"id":{"type":"string"}}}, "outputSchema":{"type":"object"},
-      "execution":{"type":"handler","handler":"disable"}, "effects":["file_write"]
+      "name": "disable",
+      "description": "Disable a job and clear its scheduled occurrence.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 262144
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "effects": [
+        "fs.write"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "unsafe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     },
     {
-      "name":"run_now", "description":"Atomically claim and serially execute one manual occurrence without retry.",
-      "inputSchema":{"type":"object","required":["id"],"properties":{"id":{"type":"string"}}}, "outputSchema":{"type":"object"},
-      "execution":{"type":"handler","handler":"run_now"}, "effects":["model_network","protocol_invoke"]
+      "name": "run_now",
+      "description": "Atomically claim and serially execute one manual occurrence without retry.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 262144
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "effects": [
+        "fs.write",
+        "process.spawn",
+        "model.call",
+        "protocol.invoke"
+      ],
+      "traits": {
+        "determinism": "best_effort",
+        "replay": "unsafe",
+        "interaction": "request_response",
+        "cancellable": false
+      }
     }
   ]
 }
