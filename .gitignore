@@ -1,0 +1,5 @@
+node_modules/
+rust/target/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

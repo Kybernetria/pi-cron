@@ -1,0 +1,43 @@
+{
+  "name": "pi-cron",
+  "version": "0.1.0",
+  "description": "Daemon-owned persistent cron scheduling for Pi chat and pi-protocol actions",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && cargo build --manifest-path rust/Cargo.toml && tsx --test test/*.test.ts && cargo test --manifest-path rust/Cargo.toml",
+    "build:daemon": "cargo build --release --manifest-path rust/Cargo.toml",
+    "daemon": "rust/target/release/pi-cron-daemon",
+    "runner": "tsx runner/main.ts",
+    "install:daemon-service": "tsx scripts/install-user-service.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.82.1",
+    "@kybernetria/pi-protocol": "^1.0.10",
+    "@mariozechner/pi-ai": "npm:@earendil-works/pi-ai@^0.82.1",
+    "ajv": "^8.20.0",
+    "tsx": "^4.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "typescript": "^5.9.3"
+  },
+  "private": true,
+  "exports": {
+    ".": "./index.ts",
+    "./extension": "./extension.ts",
+    "./client": "./src/client.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./extension.ts"
+    ]
+  }
+}
