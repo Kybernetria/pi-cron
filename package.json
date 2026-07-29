@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.82.1",
-    "@kybernetria/pi-protocol": "https://github.com/Kybernetria/pi-protocol/releases/download/v3.0.1/kybernetria-pi-protocol-3.0.1.tgz",
+    "@kybernetria/pi-protocol": "https://github.com/Kybernetria/pi-protocol/releases/download/v3.0.2/kybernetria-pi-protocol-3.0.2.tgz",
     "@mariozechner/pi-ai": "npm:@earendil-works/pi-ai@^0.82.1",
     "tsx": "^4.23.1"
   },
