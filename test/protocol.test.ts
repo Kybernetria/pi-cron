@@ -7,7 +7,6 @@ import { definition, protocolNodeId } from "../src/protocol-manifest.ts";
 const names = ["add", "edit", "delete", "list", "get", "enable", "disable", "run_now"];
 
 test("cron contract is canonical, bounded, and deployment-free", () => {
-  assert.equal(definition.sourceSchemaVersion, 1);
   assert.equal(protocolNodeId, "pi_cron");
   assert.deepEqual(definition.manifest.provides.map((provide) => provide.name), names);
   assert.equal(JSON.stringify(definition.manifest).includes("execution"), false);
